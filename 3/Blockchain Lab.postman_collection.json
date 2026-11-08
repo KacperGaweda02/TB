@@ -1,0 +1,163 @@
+{
+  "info": {
+    "_postman_id": "ee6b5304-50ae-4756-9316-9ba38d3ab9cd",
+    "name": "Blockchain Lab",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "60025832",
+    "_collection_link": "https://go.postman.co/collection/60025832-ee6b5304-50ae-4756-9316-9ba38d3ab9cd?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "chain",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Test 1: Sprawdzenie kodu odpowiedzi (oczekiwany 200)\r\npm.test(\"Status 200 (OK)\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\n// Test 2: Długość łańcucha zgadza się z polem 'length'\r\npm.test(\"Długość zgodna z liczbą bloków\", function () {\r\n    const json = pm.response.json();\r\n    pm.expect(json.chain.length).to.eql(json.length);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/chain",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "chain"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "transaction",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Test 1: Sprawdzenie kodu odpowiedzi (oczekiwany 201)\r\npm.test(\"Status 201 (Created)\", function () {\r\n    pm.response.to.have.status(201);\r\n});\r\n\r\n// Test 2: Sprawdzenie struktury JSON\r\npm.test(\"Zwraca komunikat o dodaniu do bloku\", function () {\r\n    const json = pm.response.json();\r\n    pm.expect(json).to.have.property(\"message\");\r\n    pm.expect(json.message).to.include(\"Transakcja zostanie dodana do bloku\");\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sender\": \"Alice\",\r\n  \"recipient\": \"Bob\",\r\n  \"amount\": 5,\r\n  \"secret_note\": \"To jest atak\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/transactions/new",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "new"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "mine",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "// Test 1: Sprawdzenie kodu odpowiedzi (oczekiwany 200)\r\npm.test(\"Status 200 (OK)\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\n// Test 2: Skrót bloku spełnia warunek trudności\r\npm.test(\"Skrót bloku spełnia warunek trudności\", function () {\r\n    const json = pm.response.json();\r\n    pm.expect(json.hash.startsWith(\"0000\")).to.be.true;\r\n});\r\n\r\n// Test 3 (Opcjonalny dla pierwszej iteracji, kluczowy dla kolejnych): Powiązanie bloków\r\nconst json = pm.response.json();\r\nconst savedHash = pm.environment.get(\"lastHash\");\r\n\r\nif (savedHash) {\r\n    pm.test(\"Zgodność previous_hash z lastHash poprzedniego bloku\", function () {\r\n        pm.expect(json.block.previous_hash).to.eql(savedHash);\r\n    });\r\n}\r\n\r\n// Zapisanie hasha nowo wydobytego bloku na potrzeby testu w kolejnej iteracji\r\npm.environment.set(\"lastHash\", json.hash);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/mine",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "mine"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "transactions/pending",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status 200 (OK)\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Zwraca tablice transakcji i jej dlugosc\", function () {\r\n    const json = pm.response.json();\r\n    pm.expect(json).to.have.property(\"transactions\");\r\n    pm.expect(json).to.have.property(\"length\");\r\n    pm.expect(json.transactions).to.be.an(\"array\");\r\n    pm.expect(json.transactions.length).to.eql(json.length);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/transactions/pending",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "transactions",
+            "pending"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "block/<index>",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"Status 200 (OK)\", function () {\r\n    pm.response.to.have.status(200);\r\n});\r\n\r\npm.test(\"Zwraca poprawny indeks bloku\", function () {\r\n    const json = pm.response.json();\r\n    pm.expect(json.index).to.eql(1);\r\n});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/block/999",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "block",
+            "999"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
